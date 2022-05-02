@@ -7,7 +7,6 @@ export const usersSlice = createSlice({
     },
     reducers: {
       loadTenMore: (state, action) => {
-        console.log(action.payload);
         state.value = action.payload;
       }
     }

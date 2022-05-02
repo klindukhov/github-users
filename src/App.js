@@ -5,8 +5,8 @@ import './App.css';
 import { getByUsername, getAllUsers } from './api';
 
 import { useDispatch, useSelector } from 'react-redux';
-import {loadTenMore} from './usersSlice';
-import {incrementByTen} from './perPageSlice';
+import { loadTenMore } from './usersSlice';
+import { incrementByTen } from './perPageSlice';
 
 export default function App() {
   const users = useSelector(state => state.users);
@@ -14,30 +14,35 @@ export default function App() {
 
   const dispatch = useDispatch();
 
-  const [expanded, setExpanded] = useState();
-
   useEffect(() => {
-    getAllUsers(10).then(data => { dispatch(loadTenMore(data)); console.log(data) }).catch(e => console.log('error', e));
+    getAllUsers(10)
+      .then(data => dispatch(loadTenMore(data)))
+      .catch(e => console.log('error', e));
     // eslint-disable-next-line
   }, [])
 
   const handleLoadMore = () => {
-    getAllUsers(parseInt(perPage.value) + 10).then(data => { dispatch(loadTenMore(data)); console.log(data) }).catch(e => console.log('error', e));
+    getAllUsers(parseInt(perPage.value) + 10)
+      .then(data => dispatch(loadTenMore(data)))
+      .catch(e => console.log('error', e));
     dispatch(incrementByTen());
   }
 
-
-
-
+  const [expanded, setExpanded] = useState();
   const [expandLoading, setExpandLoading] = useState(true);
   const [expandContent, setExpandContent] = useState(false);
-  const handleExpand = (u) => {
-    if (expanded === u) {
+  const handleExpand = (username) => {
+    if (expanded === username) {
       setExpanded(false);
     } else {
-      setExpanded(u);
+      setExpanded(username);
       setExpandLoading(true);
-      getByUsername(u).then(data => setExpandContent(data)).then(() => setExpandLoading(false)).catch(e => console.log("error", e));
+      getByUsername(username)
+        .then(data => {
+          setExpandContent(data);
+          setExpandLoading(false)
+        })
+        .catch(e => console.log("error", e));
     }
 
   }
