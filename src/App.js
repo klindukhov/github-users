@@ -4,50 +4,28 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import { getByUsername, getAllUsers } from './api';
 
-import { createSlice, configureStore } from '@reduxjs/toolkit'
-
-// const usersSlice = createSlice({
-//   name: 'users',
-//   initialState:{},
-//   reducers:{
-//     loadTenMore: (state) =>{
-
-//     }
-//   }
-// })
-// const {loadTenMore} = usersSlice.actions;
-
-
-const perPageSlice = createSlice({
-  name: 'perPage',
-  initialState: {
-    value: '10'
-  },
-  reducers: {
-    incrementByTen: (state) => {
-      state.value = parseInt(state.value) + 10;
-    }
-  }
-})
-const { incrementByTen } = perPageSlice.actions;
-
-const store = configureStore({
-  reducer: {
-    perPage: perPageSlice.reducer
-  }
-})
+import { useDispatch, useSelector } from 'react-redux';
+import {loadTenMore} from './usersSlice';
+import {incrementByTen} from './perPageSlice';
 
 export default function App() {
-  const [users, setUsers] = useState([]);
-  // const [perPage, setPerPage] = useState("10");
+  const users = useSelector(state => state.users);
+  const perPage = useSelector(state => state.perPage);
+
+  const dispatch = useDispatch();
 
   const [expanded, setExpanded] = useState();
 
   useEffect(() => {
-    getAllUsers(store.getState().perPage.value).then(data => setUsers(data)).catch(e => console.log('error', e));
+    getAllUsers(10).then(data => { dispatch(loadTenMore(data)); console.log(data) }).catch(e => console.log('error', e));
+    // eslint-disable-next-line
   }, [])
 
-  store.subscribe(() => getAllUsers(store.getState().perPage.value).then(data => setUsers(data)).catch(e => console.log('error', e)))
+  const handleLoadMore = () => {
+    getAllUsers(parseInt(perPage.value) + 10).then(data => { dispatch(loadTenMore(data)); console.log(data) }).catch(e => console.log('error', e));
+    dispatch(incrementByTen());
+  }
+
 
 
 
@@ -68,7 +46,7 @@ export default function App() {
   return (
     <div className="main">
       <div className='content'>
-        {users.map(u => <span key={u.login}>
+        {users.value.map(u => <span key={u.login}>
           <Accordion
             className='user-card'
             expanded={expanded === u.login}
@@ -103,7 +81,7 @@ export default function App() {
           </Accordion>
         </span>)}
       </div>
-      <Button variant="contained" disabled={store.getState().perPage.value >= 100} sx={{ margin: '1vh' }} size="medium" onClick={() => store.dispatch(incrementByTen())}>
+      <Button variant="contained" disabled={perPage.value >= 100} sx={{ margin: '1vh' }} size="medium" onClick={handleLoadMore}>
         Load more users
       </Button>
     </div>
