@@ -1,25 +1,111 @@
-import logo from './logo.svg';
+import { ExpandMoreOutlined } from '@mui/icons-material';
+import { Accordion, AccordionDetails, AccordionSummary, Avatar, Button, CircularProgress } from '@mui/material';
+import { useEffect, useState } from 'react';
 import './App.css';
+import { getByUsername, getAllUsers } from './api';
 
-function App() {
+import { createSlice, configureStore } from '@reduxjs/toolkit'
+
+// const usersSlice = createSlice({
+//   name: 'users',
+//   initialState:{},
+//   reducers:{
+//     loadTenMore: (state) =>{
+
+//     }
+//   }
+// })
+// const {loadTenMore} = usersSlice.actions;
+
+
+const perPageSlice = createSlice({
+  name: 'perPage',
+  initialState: {
+    value: '10'
+  },
+  reducers: {
+    incrementByTen: (state) => {
+      state.value = parseInt(state.value) + 10;
+    }
+  }
+})
+const { incrementByTen } = perPageSlice.actions;
+
+const store = configureStore({
+  reducer: {
+    perPage: perPageSlice.reducer
+  }
+})
+
+export default function App() {
+  const [users, setUsers] = useState([]);
+  // const [perPage, setPerPage] = useState("10");
+
+  const [expanded, setExpanded] = useState();
+
+  useEffect(() => {
+    getAllUsers(store.getState().perPage.value).then(data => setUsers(data)).catch(e => console.log('error', e));
+  }, [])
+
+  store.subscribe(() => getAllUsers(store.getState().perPage.value).then(data => setUsers(data)).catch(e => console.log('error', e)))
+
+
+
+  const [expandLoading, setExpandLoading] = useState(true);
+  const [expandContent, setExpandContent] = useState(false);
+  const handleExpand = (u) => {
+    if (expanded === u) {
+      setExpanded(false);
+    } else {
+      setExpanded(u);
+      setExpandLoading(true);
+      getByUsername(u).then(data => setExpandContent(data)).then(() => setExpandLoading(false)).catch(e => console.log("error", e));
+    }
+
+  }
+
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="main">
+      <div className='content'>
+        {users.map(u => <span key={u.login}>
+          <Accordion
+            className='user-card'
+            expanded={expanded === u.login}
+            onClick={() => handleExpand(u.login)}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreOutlined />}
+              aria-controls="panel1a-content"
+              id="panel1a-header"
+            >
+              <Avatar src={u.avatar_url} sx={{ height: expanded === u.login ? '200px' : '100px', width: expanded === u.login ? '200px' : '100px', marginRight: '2vw', transitionDuration: '0.5s' }} />
+              <div>
+                <div className='user-name'>{u.login}</div>
+                <a href={u.html_url}>{u.html_url}</a>
+              </div>
+            </AccordionSummary>
+            <AccordionDetails
+              className='user-card'
+              sx={{ display: 'flex', justifyContent: expandLoading ? 'center' : 'start' }}>
+              {expandLoading && <CircularProgress />}
+              {!expandLoading && expandContent && <div>
+                <span className='user-key'>Name</span><br /><span className='user-value'> {expandContent.name !== null ? expandContent.name : '-'}</span> <br /><br />
+                <span className='user-key'>Followers</span><br /><span className='user-value'>{expandContent.followers !== null ? expandContent.followers : '-'}</span><br /><br />
+                <span className='user-key'>Following</span><br /><span className='user-value'>{expandContent.following !== null ? expandContent.following : '-'}</span><br /><br />
+                <span className='user-key'>Joined</span><br /><span className='user-value'>{expandContent.created_at !== null ? expandContent.created_at : '-'}</span><br /><br />
+                <span className='user-key'>Company</span><br /><span className='user-value'>{expandContent.company !== null ? expandContent.company : '-'}</span><br /><br />
+                <span className='user-key'>Email</span><br /><span className='user-value'>{expandContent.email !== null ? expandContent.email : '-'}</span><br /><br />
+                <span className='user-key'>Location</span><br /> <span className='user-value'>{expandContent.location !== null ? expandContent.location : '-'}</span><br /><br />
+                <span className='user-key'>Blog</span><br /><span className='user-value'>{expandContent.blog !== null ? <a href={expandContent.blog}>{expandContent.blog}</a> : '-'}</span><br /><br />
+                <span className='user-key'>Bio</span><br /><span className='user-value'>{expandContent.bio !== null ? expandContent.bio : '-'}</span><br /><br />
+              </div>}
+            </AccordionDetails>
+          </Accordion>
+        </span>)}
+      </div>
+      <Button variant="contained" disabled={store.getState().perPage.value >= 100} sx={{ margin: '1vh' }} size="medium" onClick={() => store.dispatch(incrementByTen())}>
+        Load more users
+      </Button>
     </div>
   );
 }
-
-export default App;
